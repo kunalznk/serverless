@@ -1,0 +1,35 @@
+service: serverless-example
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
+custom:
+  serverlessPluginTypescript:
+    tsConfigFileLocation: './tsconfig.build.json'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+
+functions:
+  getNote:
+    handler: handlers/notes.getNote
+    events:
+      - http:
+          path: notes
+          method: GET
+  addNote:
+    handler: handlers/notes.addNote
+    events:
+      - http:
+          path: notes
+          method: POST
+          cors: true  
+          request:
+            schemas:
+              application/json: ${file(schema/create_note.json)}
+
+              
+              
+
