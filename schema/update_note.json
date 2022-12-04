@@ -5,18 +5,22 @@
     "description": "A note in notes",
     "type": "object",
     "properties": {
+        "noteId": {
+            "description": "The unique identifier for a noteId",
+            "type": "string"
+          },
         "title": {
           "description": "The unique identifier for a title",
           "type": "string"
         },
         "content": {
-          "description": "The unique identifier for a title",
+          "description": "The unique identifier for a content",
           "type": "string"
         },
         "date": {
-          "description": "The unique identifier for a title",
+          "description": "The unique identifier for a date",
           "type": "string"
         }
       },
-      "required": [ "title", "content", "date" ]
+      "required": [ "noteId" ]
   }
