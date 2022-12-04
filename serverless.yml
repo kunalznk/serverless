@@ -30,6 +30,51 @@ functions:
             schemas:
               application/json: ${file(schema/create_note.json)}
 
-              
-              
-
+resources:
+  Resources:
+    notesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: notes
+        SSESpecification:
+          SSEEnabled: true
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: noteId
+            KeyType: HASH
+          - AttributeName: userId
+            KeyType: RANGE
+        AttributeDefinitions:
+          - AttributeName: noteId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: title
+            AttributeType: S
+          - AttributeName: content
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1     
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: users
+        SSESpecification:
+          SSEEnabled: true
+        BillingMode: PAY_PER_REQUEST
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: emailId
+            AttributeType: S
+          - AttributeName: password
+            AttributeType: S
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
