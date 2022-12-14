@@ -13,8 +13,8 @@ provider:
   runtime: nodejs14.x
 
 functions:
-  getNote:
-    handler: handlers/notes.getNote
+  getNotes:
+    handler: handlers/notes.getNotes
     events:
       - http:
           path: notes
@@ -29,6 +29,43 @@ functions:
           request:
             schemas:
               application/json: ${file(schema/create_note.json)}
+            passThrough: NEVER
+  getNote:
+    handler: handlers/notes.getNoteById
+    events:
+      - http:
+          path: notes/{noteId}
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                noteId: true
+  updateNote:
+    handler: handlers/notes.updateNoteById
+    events:
+      - http:
+          path: notes/{noteId}
+          method: patch
+          cors: true
+          request:
+            parameters:
+              paths:
+                noteId: true
+            schemas:
+              application/json: ${file(schema/update_note.json)}
+            passThrough: NEVER
+  deleteNote:
+    handler: handlers/notes.deleteNoteById
+    events:
+      - http:
+          path: notes/{noteId}
+          method: delete
+          cors: true
+          request:
+            parameters:
+              paths:
+                noteId: true
 
 resources:
   Resources:
