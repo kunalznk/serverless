@@ -1,16 +1,50 @@
 service: serverless-example
+frameworkVersion: v3
+configValidationMode: error
+
 
 plugins:
   - serverless-plugin-typescript
   - serverless-offline
 
+
 custom:
   serverlessPluginTypescript:
     tsConfigFileLocation: './tsconfig.build.json'
+  allowedHeaders:
+    - Accept
+    - Content-Type
+    - Authorization
+    - X-Amz-Date
+    - X-Api-Key
+    - X-Amz-Security-Token
+    - X-Amz-User-Agent
+    - app_user_id
+    - app_user_name
 
 provider:
   name: aws
   runtime: nodejs14.x
+  region: us-east-1
+  stage: dev
+  memorySize: 128
+  timeout: 2
+  environment:
+    NOTES_TABLE:  "notes"
+    COGNITO_IDENTITY_POOL_ID: "pool-id"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: 
+            -  'dynamodb:Query'
+            -  'dynamodb:PutItem'
+            -  'dynamodb:DeleteItem'
+            -  'dynamodb:GetItem'
+            -  'dynamodb:UpdateItem'
+          Resource: "arn:aws:dynamodb:${self.provider.region}:*:table/${self:provider.environment.NOTES_TABLE}"
+       
+    
 
 functions:
   getNotes:
@@ -19,63 +53,75 @@ functions:
       - http:
           path: notes
           method: GET
+  
   addNote:
     handler: handlers/notes.addNote
     events:
       - http:
           path: notes
           method: POST
-          cors: true  
-          request:
-            schemas:
-              application/json: ${file(schema/create_note.json)}
-            passThrough: NEVER
+          cors: 
+            origins: '*'
+            headers: ${self:custom.allowedHeaders}
+  
   getNote:
     handler: handlers/notes.getNoteById
     events:
       - http:
           path: notes/{noteId}
           method: get
-          cors: true
+          cors: 
+            origins: '*'
+            headers: ${self:custom.allowedHeaders}
           request:
             parameters:
               paths:
                 noteId: true
+  
   updateNote:
     handler: handlers/notes.updateNoteById
     events:
       - http:
           path: notes/{noteId}
           method: patch
-          cors: true
+          cors: 
+            origins: '*'
+            headers: ${self:custom.allowedHeaders}
           request:
             parameters:
               paths:
                 noteId: true
-            schemas:
-              application/json: ${file(schema/update_note.json)}
-            passThrough: NEVER
+           
   deleteNote:
     handler: handlers/notes.deleteNoteById
     events:
       - http:
           path: notes/{noteId}
           method: delete
-          cors: true
+          cors: 
+            origins: '*'
+            headers: ${self:custom.allowedHeaders}
           request:
             parameters:
               paths:
                 noteId: true
+  
+  authorize:
+    handler: handlers/notes.authorize
+    events:
+      - http:
+          path: auth
+          method: GET
+          cors: 
+            origins: '*'
+            headers: ${self:custom.allowedHeaders}
 
 resources:
   Resources:
     notesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: notes
-        SSESpecification:
-          SSEEnabled: true
-        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.NOTES_TABLE}
         KeySchema:
           - AttributeName: noteId
             KeyType: HASH
@@ -86,32 +132,16 @@ resources:
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: title
-            AttributeType: S
-          - AttributeName: content
-            AttributeType: S
-          - AttributeName: date
-            AttributeType: S
         ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1     
-    usersTable:
-      Type: AWS::DynamoDB::Table
+    
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
       Properties:
-        TableName: users
-        SSESpecification:
-          SSEEnabled: true
-        BillingMode: PAY_PER_REQUEST
-        KeySchema:
-          - AttributeName: userId
-            KeyType: HASH
-        AttributeDefinitions:
-          - AttributeName: userId
-            AttributeType: S
-          - AttributeName: emailId
-            AttributeType: S
-          - AttributeName: password
-            AttributeType: S
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType:  DEFAULT_4XX
+        RestApiId: 
+          Ref: 'ApiGatewayRestApi'
