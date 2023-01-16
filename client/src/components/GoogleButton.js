@@ -1,34 +1,55 @@
 import { Button, Grid, Typography } from '@mui/material';
 import googleButton from "../google.png"
 import { GoogleLogin } from 'react-google-login';
-import { axios } from 'axios';
+import  axios from 'axios';
+import { gapi } from 'gapi-script';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { userAction, globalAction } from '../store';
+import { GOOGLE_CLIENT_ID, BASE_URL, POSTFIX } from '../api';
+
 
 
 const GoogleButton = () => {
-
+    const dispatch  = useDispatch();
     const responseGoogle = async (response) => {
-        console.log(response);
-        const id_token = response.id_token;
-        let options = {
-            Authorization: id_token
-        }   
-        const authUrl =  BASE_URL + POSTFIX + "/auth";
-        const creds = await axios.get(authUrl, options)
-        localStorage.setItem("id_token" , id_token)
-        localStorage.setItem('aws_cred' , JSON.stringify(creds));
+        try {
+        const id_token = response.tokenId;  
+        const authUrl =  BASE_URL + POSTFIX + "auth";
+        
+        const res = await axios.get(authUrl, {
+            headers: {
+                Authorization: id_token
+            }
+        })
+        dispatch(userAction.setUser(res.data.userName));
+        dispatch(userAction.setTokens(res.data));
+        localStorage.setItem("tokenId" , res.data.IdentityId)
+        } catch (error) {
+            dispatch(globalAction.isError(response));
+         }
+        
 
     }
-
     const failureGoogle = async (response) => {
-        console.log(response);
-      
-
+        dispatch(globalAction.isError(response));
     }
+
+    useEffect(() => {
+        function start() {
+          gapi.client.init({
+            clientId: GOOGLE_CLIENT_ID,
+            scope: 'email',
+          });
+        }
+        gapi.load('client:auth2', start);
+      }, []);
+
     return <Grid item textAlign="center" sx={{ background: "#FFFFFF", boxShadow: "0px 10px 25px rgba(29, 52, 54, 0.08)", borderRadius: "10px" }}>
         <GoogleLogin
-            clientId="658977310896-knrl3gka66fldh83dao2rhgbblmd4un9.apps.googleusercontent.com"
+            clientId={GOOGLE_CLIENT_ID}
             buttonText="Login with Google"
-            onSuccess={responseGoogle}
+            onSuccess={async(res) => await responseGoogle(res)}
             onFailure={failureGoogle}
             cookiePolicy={'single_host_origin'}
             render={(renderProps) => <Button container

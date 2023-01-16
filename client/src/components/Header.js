@@ -1,7 +1,12 @@
 import { AppBar, Box, IconButton, Toolbar, Typography } from "@mui/material"
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useDispatch, useSelector } from "react-redux";
+import { userAction } from "../store";
 
 const Header = () => {
+    const dispatch = useDispatch()
+    const { user } = useSelector((state) => { return { global : state.global, note: state.note, user:state.user }} )
+    
     return <AppBar component="nav" position="relative">
         <Toolbar variant="dense">
             <Typography
@@ -12,17 +17,16 @@ const Header = () => {
             >NOTES APP</Typography>
             <Box sx={{ flexGrow: 1 }} />
             <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-                <IconButton
+                {user.IdentityId ? <IconButton
                     size="large"
                     edge="end"
                     aria-label="account of current user"
-                    // aria-controls={menuId}
                     aria-haspopup="true"
-                    // onClick={handleProfileMenuOpen}
+                    onClick={() => {localStorage.clear(); dispatch(userAction.setTokens({awsCred: {},IdentityId: ""})); dispatch(userAction.setUser(""))}}
                     color="inherit"
                 >
-                    <AccountCircleIcon />
-                </IconButton>
+                    <LogoutIcon />
+                </IconButton> : null}
             </Box>
         </Toolbar>
     </AppBar >

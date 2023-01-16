@@ -1,18 +1,17 @@
-import { Button, Grid, Paper, TextField, Typography } from "@mui/material"
-import { useState } from 'react';
+import { Button, Grid, TextField, Typography } from "@mui/material"
+import { useDispatch , connect} from 'react-redux';
+import { globalAction, thunks } from "../store";
+import { notesAction } from "../store";
+const NoteModal = (props) => {
 
-const NoteModal = ({ onClose, lable }) => {
-    const [note, setNote] = useState({
-        title: "",
-        description: "",
-        category: "",
-        date: "",
-        time: ""
-    })
-
+    const {note , noteAction} = props;
+    const dispatch = useDispatch()
     const onChange = (e) => {
-        setNote({ ...note, [e.target.id]: [e.target.value] })
+        const field = {[e.target.id]: e.target.value};
+        noteAction.setField(field)
     }
+    
+
     return <Grid container justifyContent="center">
         <Grid item container flexDirection="column" alignContent="stretch"
             sx={{
@@ -30,7 +29,7 @@ const NoteModal = ({ onClose, lable }) => {
                 fontSize={30}
                 fontWeight={500}
                 color="#29A19C"
-            >{lable} Note</Grid>
+            >{note.noteId ? "Update" : "Add"} Note</Grid>
             <Grid item flexDirection="column" alignContent="flex-start" padding="10px"
             >
                 <Grid item textAlign="left" height="30px">
@@ -109,7 +108,7 @@ const NoteModal = ({ onClose, lable }) => {
                             id={"category"}
                         />
                     </Grid>
-                    </Grid>
+                </Grid>
 
                 <Grid item flexDirection="column" alignContent="flex-start" padding="10px"
                     lg={4}
@@ -191,7 +190,14 @@ const NoteModal = ({ onClose, lable }) => {
                                 color: "#FAFAFA",
                                 backgroundColor: "#F05454"
                             }}
-                            onClick={onClose}
+                            onClick={() => {dispatch(globalAction.isModalOpen()); dispatch(noteAction.setField( {
+                                title: "",
+                                category: "",
+                                description: "",
+                                date: "",
+                                time: "",
+                                noteId: ""
+                            }));}}
                             variant="outlined"
                         >Cancel</Button>
                     </Grid>
@@ -215,7 +221,10 @@ const NoteModal = ({ onClose, lable }) => {
                             }}
                             variant="contained"
                             color="primary"
-                        >{lable}</Button>
+                            onClick={() => {
+                                noteAction.setNote(note);
+                            }}
+                        >{note.noteId ? "Update" : "Add"}</Button>
                     </Grid>
                 </Grid>
             </Grid>
@@ -223,4 +232,18 @@ const NoteModal = ({ onClose, lable }) => {
     </Grid >
 }
 
-export default NoteModal;
+const mapStateToProp = (state, ownProp) => {
+    const note = state.note.noteToUpdate.noteId ? state.note.noteToUpdate : state.note.noteToAdd;
+    return {note , ...ownProp};
+}
+
+const mapDispatchToProp = (dispatch, ownProp) => {
+    const noteAction =  { 
+        setField : (field) => ownProp.noteId ? dispatch(notesAction.setNoteToUpdate(field)) : dispatch(notesAction.setNoteToAdd(field)),
+        setNote : (note) => ownProp.noteId ? dispatch(thunks.notes.updateNote(note)) : dispatch(thunks.notes.addNote(note))
+    }
+    
+    return { noteAction };
+}
+
+export default connect(mapStateToProp, mapDispatchToProp)(NoteModal);

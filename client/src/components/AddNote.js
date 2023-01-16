@@ -1,13 +1,13 @@
-import { Button, Card, CardContent, CardHeader, Grid, IconButton, Typography } from "@mui/material";
+import { Button, Card, CardContent, Grid, Typography } from "@mui/material";
 import NoteAltTwoToneIcon from '@mui/icons-material/NoteAltTwoTone';
+import { useDispatch } from 'react-redux';
+import { globalAction } from "../store";
 
-const AddNote = ({ onClick }) => {
+const AddNote = () => {
+   const dispatch =  useDispatch();
     return <Grid item
-        // xs={9}
-        md={6}
-        // lg={4}
-        xl={3}>
-        <Card item
+    xs={12} sm={12} md={6} lg={3} xl={3} >
+        <Card 
             elevation={8}
             sx={{ minWidth: 320, minHeight: 175 }}
         >
@@ -32,7 +32,7 @@ const AddNote = ({ onClick }) => {
                             padding: "8px",
                             width: "260px",
                         }}
-                        onClick={onClick}
+                        onClick={() => dispatch(globalAction.isModalOpen())}
                     >
                         <Grid item
                         >
@@ -48,7 +48,7 @@ const AddNote = ({ onClick }) => {
                                     width: "150px",
                                     color: "#282846",
                                     paddingTop: "2px",
-                                    color: "#FAFAFA"
+                                    // color: "#FAFAFA"
                                 }}>Add Note</Typography>
                         </Grid>
 

@@ -1,63 +1,55 @@
-import { Backdrop, Button, CircularProgress, Grid, Modal, Paper, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
 import './App.css';
+import { Container, Grid, Modal, Paper } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux'
+import { useEffect, useState } from 'react';
+import { thunks } from './store';
 import AddNote from './components/AddNote';
-import GoogleButton from './components/GoogleButton';
 import Header from './components/Header';
-import NoteCard from './components/NoteCard';
 import NoteModal from './components/NoteModal';
-import { getNotes } from './api';
 import Loader from './components/Loader';
-import { Box } from '@mui/system';
+import NoteCard from './components/NoteCard';
+import { signApi } from './api';
+import GoogleButton from './components/GoogleButton';
 
 
 function App() {
 
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [lable, setLabel] = useState("Add")
-  const [user, setUser] = useState(true)
-  const [notes, setNotes] = useState([]);
+  const dispatch = useDispatch()
+  const { global, note, user } = useSelector((state) => { return { global : state.global, note: state.note, user:state.user }} )
+  const [counter , setCounter ] = useState(-1)
 
   useEffect(() => {
-    if (notes.length > 0) {
-      setLoading(true);
-      getNotes().then((newNotes) => setNotes(newNotes));
-      setLoading(false);
+    if(user.IdentityId) {
+      if(counter) {signApi(user.awsCred); setCounter(1)}
+      dispatch(thunks.notes.fetchNotes())
     }
-  }, [notes])
-
-
+  }, [counter, note.notes, user.IdentityId, user.awsCred,dispatch])
 
   return (
-    <div className='App'>
-      <Loader open={loading}/>
+    <Container maxWidth="xl" minHeight="xl">
+      <Loader open={global.loading}/> 
       <Header />
-      <Paper sx={{backgroundColor: "red" , minHeight: "100vh" }} className="gradient">
-      {user && <Grid container spacing={4} padding={4}
-      // lg={12} md={10} xs={9} xl={3}   sx={{ background: "#FFFFFF", boxShadow: "0px 10px 25px rgba(29, 52, 54, 0.08)", borderRadius: "10px"  }}
-      >
-        {<AddNote onClick={() => { setOpen(!open) }} />}
-        {[1, 2, 3, 4, 5, 6,7,8].map(() => <NoteCard setOpen={setOpen} setLabel={setLabel} />)}
-      </Grid>}
-
-      {open && <Modal
-        open={open}
-        onClose={() => setOpen(!open)}
-      >
-        <div className='App'>
+      <Container maxWidth="xl"  sx={{ minHeight:"95vh" }}>
+        <Paper elevation={10}>
+          <Grid container gap="10px" justifyContent="center" alignContent="center" alignItems="center" minHeight="95vh" >
+       {  user.IdentityId ? <>
+        <AddNote />
+        { note.notes.map((note) => <NoteCard key={note.noteId} note={note}/>) }
+       </>
+        : <GoogleButton />
+        }
+      </Grid>
+      {global.isModalOpen && <Modal
+        open={global.isModalOpen}
+        style={{display:'flex',alignItems:'center',justifyContent:'center'}}
+        >
           <NoteModal
-            lable={lable}
-            onClose={() => {setOpen(!open); setLabel("Add")}}
+          noteId={note.noteToUpdate.noteId} 
           />
-        </div>
       </Modal>}
-      {!user && <GoogleButton />}
-
-      </Paper>
-  
-
-    </div >
+        </Paper>
+      </Container>
+    </Container>
   );
 }
 
